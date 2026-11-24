@@ -38,7 +38,7 @@
     '<div class="g-context" hidden></div>' +
     '<div class="g-log" aria-live="polite"></div>' +
     '<div class="g-chips"></div>' +
-    '<form class="g-form"><textarea id="g-input" rows="2" placeholder="Why is it 曲がって and not 曲がります?" aria-label="Your question"></textarea>' +
+    '<form class="g-form"><textarea id="g-input" rows="2" placeholder="Type your question here…" aria-label="Your question"></textarea>' +
     '<div class="g-actions"><button type="button" class="g-new">New chat</button>' +
     '<button type="button" class="g-stop" hidden>Stop</button>' +
     '<button type="submit" class="g-send">Ask</button></div></form>';
@@ -46,7 +46,9 @@
 
   const $ = (sel) => panel.querySelector(sel);
   const log = $(".g-log"), input = $("#g-input"), form = $(".g-form");
-  const sendBtn = $(".g-send"), stopBtn = $(".g-stop"), chips = $(".g-chips"), ctxBox = $(".g-context");
+  const sendBtn = $(".g-send");
+  sendBtn.disabled = true;
+  const stopBtn = $(".g-stop"), chips = $(".g-chips"), ctxBox = $(".g-context");
 
   function current() {
     return window.LiveKanji && window.LiveKanji.currentCard();
@@ -146,7 +148,7 @@
     } finally {
       ctl = null;
       sendBtn.hidden = false; stopBtn.hidden = true;
-      sendBtn.disabled = blocked;
+      updateSend();
     }
   }
 
@@ -162,11 +164,15 @@
     fab.hidden = !sample;
   }
 
+  // Ask is only clickable once there is a question typed.
+  function updateSend() { sendBtn.disabled = blocked || !!ctl || !input.value.trim(); }
+  input.addEventListener("input", updateSend);
+
   fab.addEventListener("click", open);
   $(".g-close").addEventListener("click", close);
   stopBtn.addEventListener("click", () => ctl && ctl.abort());
   $(".g-new").addEventListener("click", () => { if (ctl) ctl.abort(); turns = []; log.textContent = ""; cardKey = ""; renderContext(); });
-  form.addEventListener("submit", (e) => { e.preventDefault(); const q = input.value; input.value = ""; ask(q); });
+  form.addEventListener("submit", (e) => { e.preventDefault(); const q = input.value; input.value = ""; updateSend(); ask(q); });
   input.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); form.requestSubmit(); }
   });
