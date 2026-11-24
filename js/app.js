@@ -107,13 +107,15 @@
       "</div>";
     }
 
-    return '<div class="deck-head"><div><h1>' + esc(deck.title) + "</h1><p>" + esc(deck.blurb) + "</p></div>" +
-        '<div class="stats"><span class="pill good">' + known + " known</span>" +
-        '<span class="pill warn">' + learning + " learning</span>" +
-        '<span class="pill plain">' + total + " cards</span></div></div>" +
+    return '<div class="deck-head" aria-label="Your progress">' +
+        '<div class="progress-text"><strong>' + known + " of " + total + " known</strong>" +
+        (learning ? '<span class="learning-count">' + learning + " still learning</span>" : "") + "</div>" +
+        '<div class="progress" aria-hidden="true">' +
+          '<div class="known" style="width:' + (known / total * 100) + '%"></div>' +
+          '<div class="learning" style="width:' + (learning / total * 100) + '%"></div>' +
+        "</div></div>" +
       '<div class="layout"><section aria-label="Flash card">' +
         '<div class="counter"><span>Card ' + (state.index + 1) + " of " + total + "</span><span>" + esc(card.where) + "</span></div>" +
-        '<div class="progress" aria-hidden="true"><div style="width:' + ((state.index + 1) / total * 100) + '%"></div></div>' +
         '<article class="card" id="card">' +
           '<button class="card-front" data-action="flip" aria-expanded="' + state.revealed + '" aria-controls="back">' +
             '<span class="word' + (isLong ? " long" : "") + '" lang="ja">' + esc(card.word) + "</span>" +

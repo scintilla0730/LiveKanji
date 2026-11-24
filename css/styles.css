@@ -86,9 +86,10 @@ button { font: inherit; color: inherit; }
 
 /* Main layout */
 main .wrap { padding-block: 24px 48px; }
-.deck-head { display: flex; justify-content: space-between; align-items: end; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
-.deck-head h1 { font: 700 26px/1.2 var(--font-head); margin: 0; text-wrap: balance; }
-.deck-head p { margin: 4px 0 0; color: var(--muted); max-width: 60ch; }
+.deck-head { margin-bottom: 20px; display: grid; gap: 8px; }
+.progress-text { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; font-variant-numeric: tabular-nums; }
+.progress-text strong { font-weight: 600; color: var(--good); }
+.learning-count { color: var(--warn); }
 .stats { display: flex; gap: 8px; font-size: 13px; font-variant-numeric: tabular-nums; }
 .pill { border-radius: 999px; padding: 3px 10px; font-weight: 500; }
 .pill.good { background: var(--good-soft); color: var(--good); }
@@ -99,8 +100,10 @@ main .wrap { padding-block: 24px 48px; }
 @media (min-width: 900px) { .layout { grid-template-columns: minmax(0, 1fr) 320px; align-items: start; } }
 
 /* Progress bar */
-.progress { height: 4px; background: var(--line); border-radius: 4px; overflow: hidden; margin-bottom: 12px; }
-.progress > div { height: 100%; background: var(--accent); transition: width .25s ease; }
+.progress { height: 8px; background: var(--line); border-radius: 8px; overflow: hidden; display: flex; }
+.progress > div { height: 100%; transition: width .25s ease; }
+.progress .known { background: var(--good); }
+.progress .learning { background: var(--warn); }
 .counter { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); margin-bottom: 8px; font-variant-numeric: tabular-nums; }
 
 /* Flash card */
