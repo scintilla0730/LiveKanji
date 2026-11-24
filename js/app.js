@@ -52,6 +52,7 @@
     next: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>',
     check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>',
     redo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v6h6"/></svg>',
+    ask: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/><path d="M9.5 9.5a2.5 2.5 0 0 1 4.8 1c0 1.5-2.3 2-2.3 3.2"/><path d="M12 16.5h.01"/></svg>',
     pin: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>'
   };
 
@@ -62,6 +63,7 @@
     app.innerHTML = header() + '<main><div class="wrap">' +
       (state.section === "videos" ? videosView() : deckView(DECKS[state.section])) +
       "</div></main>";
+    document.dispatchEvent(new CustomEvent("livekanji:render"));
   }
 
   function header() {
@@ -102,6 +104,7 @@
           '<p class="ex-en">' + esc(card.exampleEn) + "</p>" +
         "</div>" +
         (card.tip ? '<div class="tip"><div class="label">How it\'s used</div>' + esc(card.tip) + "</div>" : "") +
+        '<button class="ask-btn" data-action="ask" hidden>' + icon.ask + "Ask about this grammar</button>" +
       "</div>";
     }
 
@@ -128,7 +131,6 @@
           '<button class="btn good" data-action="known" aria-pressed="' + (mark === "known") + '">' + icon.check + "I know it</button>" +
           '<button class="btn" data-action="next" aria-label="Next card">' + icon.next + "</button>" +
         "</div>" +
-        '<div class="keys"><kbd>Space</kbd> flip · <kbd>←</kbd> <kbd>→</kbd> move · <kbd>K</kbd> know it · <kbd>L</kbd> still learning</div>' +
       "</section>" + listView(deck) + "</div>";
   }
 
@@ -224,20 +226,8 @@
       case "next": step(1); break;
       case "known": setMark("known"); break;
       case "learning": setMark("learning"); break;
+      case "ask": if (window.LiveKanjiGrammar) window.LiveKanjiGrammar.open(); break;
     }
-  });
-
-  document.addEventListener("keydown", (e) => {
-    if (state.section === "videos" || e.metaKey || e.ctrlKey || e.altKey) return;
-    if (e.target.closest && e.target.closest("input, textarea")) return;
-    if (e.key === "ArrowRight") step(1);
-    else if (e.key === "ArrowLeft") step(-1);
-    else if (e.key === " " || e.key === "Enter") {
-      if (e.target.closest && e.target.closest("button") && e.key === "Enter") return;
-      e.preventDefault(); state.revealed = !state.revealed; render();
-    }
-    else if (e.key === "k" || e.key === "K") setMark("known");
-    else if (e.key === "l" || e.key === "L") setMark("learning");
   });
 
   // Swipe left / right on the card (phones).
@@ -253,6 +243,14 @@
     touchX = touchY = null;
     if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) step(dx < 0 ? 1 : -1);
   });
+
+  // Lets the grammar helper know which card is on screen.
+  window.LiveKanji = {
+    currentCard() {
+      const deck = DECKS[state.section];
+      return deck ? { deck: deck.title, card: deck.cards[state.index] } : null;
+    }
+  };
 
   window.addEventListener("hashchange", () => setSection(location.hash.slice(1)));
   setSection(location.hash.slice(1) || "everyday");

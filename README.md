@@ -24,4 +24,5 @@ To make a single shareable file: `node scripts/build-preview.mjs` creates `dist/
 - `index.html`: the page
 - `css/styles.css`: the look
 - `js/app.js`: how the app behaves
+- `js/grammar.js`: the grammar helper (asks Claude; appears only when the page is opened through Claude)
 - `data/everyday.js`, `data/business.js`: the word lists (edit these to add words)
