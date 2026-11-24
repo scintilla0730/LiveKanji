@@ -103,7 +103,6 @@
           '<p class="ex-kana" lang="ja">' + esc(card.exampleReading) + "</p>" +
           '<p class="ex-en">' + esc(card.exampleEn) + "</p>" +
         "</div>" +
-        (card.tip ? '<div class="tip"><div class="label">How it\'s used</div>' + esc(card.tip) + "</div>" : "") +
         '<button class="ask-btn" data-action="ask" hidden>' + icon.ask + "Ask about this grammar</button>" +
       "</div>";
     }
