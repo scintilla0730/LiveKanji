@@ -116,7 +116,6 @@
         '<div class="progress" aria-hidden="true"><div style="width:' + ((state.index + 1) / total * 100) + '%"></div></div>' +
         '<article class="card" id="card">' +
           '<button class="card-front" data-action="flip" aria-expanded="' + state.revealed + '" aria-controls="back">' +
-            '<span class="plate">' + icon.pin + esc(card.where) + "</span>" +
             '<span class="word' + (isLong ? " long" : "") + '" lang="ja">' + esc(card.word) + "</span>" +
             (state.revealed
               ? '<span class="reading" lang="ja">' + esc(card.reading) + '</span><span class="meaning">' + esc(card.meaning) + "</span>"
