@@ -188,6 +188,21 @@ main .wrap { padding-block: 24px 48px; }
 .demo { border-top: 1px dashed var(--line); padding-top: 18px; }
 .demo .ex-jp ruby rt { font-size: 10px; color: var(--accent); }
 
+/* Voice buttons */
+.card { position: relative; }
+.say-word { position: absolute; top: 12px; right: 12px; z-index: 1; }
+.say {
+  border: 1px solid var(--line); background: var(--surface); color: var(--accent); border-radius: 999px;
+  width: 36px; height: 36px; display: inline-grid; place-items: center; cursor: pointer; flex: none;
+}
+.say:hover { border-color: var(--accent); background: var(--accent-soft); }
+.say svg { width: 18px; height: 18px; }
+.ex-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.ex-head .label { margin: 0; margin-right: auto; }
+.speed { border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 999px; padding: 4px 10px; font-size: 12px; cursor: pointer; }
+.speed[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.spoken .say { color: var(--good); }
+
 /* Business: formal sentence with its everyday spoken version */
 .formal { border-radius: 10px; margin: -8px; padding: 8px; cursor: pointer; outline: none; }
 .formal:focus-visible { box-shadow: 0 0 0 3px var(--accent); }
@@ -230,8 +245,17 @@ main .wrap { padding-block: 24px 48px; }
   }
 }
 .g-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
-.g-head strong { display: block; font: 600 15px/1.2 var(--font-head); }
-.g-head span { font-size: 12px; color: var(--muted); }
+.g-modes { display: flex; gap: 4px; background: var(--bg); border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
+.g-modes button { border: 0; background: transparent; border-radius: 999px; padding: 6px 14px; cursor: pointer; font-weight: 500; font-size: 14px; color: var(--muted); }
+.g-modes button[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); }
+.g-ctx-note { font: 400 13px/1.5 var(--font-body) !important; color: var(--muted); margin-top: 2px !important; }
+.g-chips .g-scene { display: grid; gap: 2px; }
+.g-scene strong { font-weight: 600; font-size: 14px; }
+.g-scene span { color: var(--muted); font-size: 12px; }
+.g-scene em { font-style: normal; font-size: 12px; color: var(--accent); }
+.g-play { margin-top: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--accent); border-radius: 999px; padding: 3px 10px; font-size: 12px; cursor: pointer; }
+.g-form[hidden] { display: none !important; }
+.g-chips.fill { flex: 1; max-height: none; padding-top: 12px; min-height: 0; }
 .g-close { border: 0; background: transparent; font-size: 24px; line-height: 1; cursor: pointer; color: var(--muted); padding: 4px 8px; border-radius: 8px; }
 .g-close:hover { background: var(--bg); }
 .g-context { padding: 10px 14px; background: var(--accent-soft); }
@@ -243,7 +267,7 @@ main .wrap { padding-block: 24px 48px; }
 .g-msg.assistant { align-self: flex-start; background: var(--bg); border-bottom-left-radius: 4px; }
 .g-msg.pending { color: var(--muted); font-style: italic; }
 .g-msg.error { border: 1px solid var(--warn); }
-.g-chips { display: flex; flex-direction: column; gap: 6px; padding: 0 14px 10px; }
+.g-chips { display: flex; flex-direction: column; gap: 6px; padding: 0 14px 10px; overflow-y: auto; max-height: 60%; }
 .g-chips:empty { display: none; }
 .g-chips button { text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 10px; cursor: pointer; font-size: 13px; }
 .g-chips button:hover { border-color: var(--accent); }

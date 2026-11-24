@@ -54,6 +54,7 @@
     check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>',
     redo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v6h6"/></svg>',
     ask: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/><path d="M9.5 9.5a2.5 2.5 0 0 1 4.8 1c0 1.5-2.3 2-2.3 3.2"/><path d="M12 16.5h.01"/></svg>',
+    speaker: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5L6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>',
     pin: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>'
   };
 
@@ -113,6 +114,7 @@
       '<div class="layout"><section aria-label="Flash card">' +
         '<div class="counter"><span>Card ' + (state.index + 1) + " of " + total + "</span><span>" + esc(card.where) + "</span></div>" +
         '<article class="card" id="card">' +
+          (speech() ? '<span class="say-word">' + sayBtn(card.word, "Play the word") + "</span>" : "") +
           '<button class="card-front" data-action="flip" aria-expanded="' + state.revealed + '" aria-controls="back">' +
             '<span class="word' + (isLong ? " long" : "") + '" lang="ja">' + esc(card.word) + "</span>" +
             (state.revealed
@@ -129,8 +131,19 @@
       "</section>" + listView(deck) + "</div>";
   }
 
+  const speech = () => window.LiveKanjiSpeech && window.LiveKanjiSpeech.available() ? window.LiveKanjiSpeech : null;
+  function sayBtn(text, label) {
+    if (!speech()) return "";
+    return '<button class="say" type="button" data-say="' + esc(text) + '" aria-label="' + esc(label || "Play audio") + '">' + icon.speaker + "</button>";
+  }
+  function speedBtn() {
+    if (!speech()) return "";
+    const slow = speech().isSlow();
+    return '<button class="speed" type="button" data-action="speed" aria-pressed="' + slow + '">' + "Slow" + "</button>";
+  }
+
   function exampleLines(card) {
-    return '<div class="label">Example</div>' +
+    return '<div class="ex-head"><span class="label">Example</span>' + sayBtn(card.example, "Play the example sentence") + speedBtn() + "</div>" +
       '<p class="ex-jp" lang="ja">' + highlight(card.example, card.word) + "</p>" +
       '<p class="ex-kana" lang="ja">' + esc(card.exampleReading) + "</p>" +
       '<p class="ex-en">' + esc(card.exampleEn) + "</p>";
@@ -143,7 +156,7 @@
       exampleLines(card) +
       '<span class="spoken-hint"><span class="on-hover">Hover over the sentence to see the everyday spoken version</span>' +
       '<span class="on-touch">' + (state.spokenOpen ? "Tap to hide the spoken version" : "Tap the sentence to see the everyday spoken version") + "</span></span>" +
-      '<div class="spoken"><div class="label">Everyday spoken version · <span lang="ja">話し言葉</span></div>' +
+      '<div class="spoken"><div class="ex-head"><span class="label">Everyday spoken version · <span lang="ja">話し言葉</span></span>' + sayBtn(card.casual, "Play the spoken version") + "</div>" +
         '<p class="ex-jp" lang="ja">' + esc(card.casual) + "</p>" +
         '<p class="ex-kana" lang="ja">' + esc(card.casualReading) + "</p>" +
         (card.casualNote ? '<p class="spoken-note">' + esc(card.casualNote) + "</p>" : "") +
@@ -233,6 +246,9 @@
   }
 
   app.addEventListener("click", (e) => {
+    const sayEl = e.target.closest("[data-say]");
+    if (sayEl) { speech() && speech().speak(sayEl.dataset.say); return; }
+    if (e.target.closest("[data-action=speed]")) { speech() && speech().setSlow(!speech().isSlow()); render(); return; }
     if (e.target.closest(".formal")) { state.spokenOpen = !state.spokenOpen; render(); return; }
     const t = e.target.closest("button");
     if (!t) return;
@@ -245,7 +261,7 @@
       case "next": step(1); break;
       case "known": setMark("known"); break;
       case "learning": setMark("learning"); break;
-      case "ask": if (window.LiveKanjiGrammar) window.LiveKanjiGrammar.open(); break;
+      case "ask": if (window.LiveKanjiGrammar) window.LiveKanjiGrammar.open("ask"); break;
     }
   });
 
@@ -278,6 +294,8 @@
       return deck ? { deck: deck.title, card: deck.cards[state.index] } : null;
     }
   };
+
+  document.addEventListener("livekanji:speech-ready", render);
 
   window.addEventListener("hashchange", () => setSection(location.hash.slice(1)));
   setSection(location.hash.slice(1) || "everyday");
