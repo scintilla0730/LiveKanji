@@ -188,6 +188,20 @@ main .wrap { padding-block: 24px 48px; }
 .demo { border-top: 1px dashed var(--line); padding-top: 18px; }
 .demo .ex-jp ruby rt { font-size: 10px; color: var(--accent); }
 
+/* Business: formal sentence with its everyday spoken version */
+.formal { border-radius: 10px; margin: -8px; padding: 8px; cursor: pointer; outline: none; }
+.formal:focus-visible { box-shadow: 0 0 0 3px var(--accent); }
+.formal .ex-jp { text-decoration: underline dotted var(--muted); text-underline-offset: 6px; text-decoration-thickness: 1px; }
+.spoken-hint { display: block; font-size: 12px; color: var(--muted); margin-top: 6px; }
+.spoken-hint .on-touch { display: none; }
+@media (hover: none) { .spoken-hint .on-hover { display: none; } .spoken-hint .on-touch { display: inline; } }
+.spoken { display: none; margin-top: 10px; border: 1px dashed var(--good); background: var(--good-soft); border-radius: 10px; padding: 10px 12px; }
+.spoken .label { color: var(--good); }
+.spoken .ex-jp { text-decoration: none; }
+.spoken-note { margin: 6px 0 0; font-size: 13px; }
+.formal.open .spoken, .formal:focus-visible .spoken { display: block; }
+@media (hover: hover) { .formal:hover { background: var(--bg); } .formal:hover .spoken { display: block; } }
+
 /* Grammar helper */
 .ask-btn {
   justify-self: start; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;

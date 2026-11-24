@@ -26,6 +26,7 @@
     section: "everyday",
     index: 0,
     revealed: false,
+    spokenOpen: false,
     filter: "all"                       // all | learning | new
   };
 
@@ -97,12 +98,7 @@
     let back = "";
     if (state.revealed) {
       back = '<div class="card-back" id="back">' +
-        "<div>" +
-          '<div class="label">Example</div>' +
-          '<p class="ex-jp" lang="ja">' + highlight(card.example, card.word) + "</p>" +
-          '<p class="ex-kana" lang="ja">' + esc(card.exampleReading) + "</p>" +
-          '<p class="ex-en">' + esc(card.exampleEn) + "</p>" +
-        "</div>" +
+        (card.casual ? formalBlock(card) : "<div>" + exampleLines(card) + "</div>") +
         '<button class="ask-btn" data-action="ask" hidden>' + icon.ask + "Ask about this grammar</button>" +
       "</div>";
     }
@@ -131,6 +127,27 @@
           '<button class="btn" data-action="next" aria-label="Next card">' + icon.next + "</button>" +
         "</div>" +
       "</section>" + listView(deck) + "</div>";
+  }
+
+  function exampleLines(card) {
+    return '<div class="label">Example</div>' +
+      '<p class="ex-jp" lang="ja">' + highlight(card.example, card.word) + "</p>" +
+      '<p class="ex-kana" lang="ja">' + esc(card.exampleReading) + "</p>" +
+      '<p class="ex-en">' + esc(card.exampleEn) + "</p>";
+  }
+
+  // Business cards: hover (computer) or tap (phone) the sentence
+  // to see how you'd say the same thing in everyday spoken Japanese.
+  function formalBlock(card) {
+    return '<div class="formal' + (state.spokenOpen ? " open" : "") + '" tabindex="0" role="button" aria-expanded="' + state.spokenOpen + '" data-action="spoken">' +
+      exampleLines(card) +
+      '<span class="spoken-hint"><span class="on-hover">Hover over the sentence to see the everyday spoken version</span>' +
+      '<span class="on-touch">' + (state.spokenOpen ? "Tap to hide the spoken version" : "Tap the sentence to see the everyday spoken version") + "</span></span>" +
+      '<div class="spoken"><div class="label">Everyday spoken version · <span lang="ja">話し言葉</span></div>' +
+        '<p class="ex-jp" lang="ja">' + esc(card.casual) + "</p>" +
+        '<p class="ex-kana" lang="ja">' + esc(card.casualReading) + "</p>" +
+        (card.casualNote ? '<p class="spoken-note">' + esc(card.casualNote) + "</p>" : "") +
+      "</div></div>";
   }
 
   function listView(deck) {
@@ -179,6 +196,7 @@
     if (!SECTIONS.some((s) => s.id === id)) id = "everyday";
     state.section = id;
     state.revealed = false;
+    state.spokenOpen = false;
     state.filter = "all";
     if (DECKS[id]) state.index = Math.min(saved.pos[id] || 0, DECKS[id].cards.length - 1);
     render();
@@ -190,6 +208,7 @@
     const n = deck.cards.length;
     state.index = (i + n) % n;
     state.revealed = false;
+    state.spokenOpen = false;
     saved.pos[deck.id] = state.index;
     save();
     render();
@@ -214,18 +233,27 @@
   }
 
   app.addEventListener("click", (e) => {
+    if (e.target.closest(".formal")) { state.spokenOpen = !state.spokenOpen; render(); return; }
     const t = e.target.closest("button");
     if (!t) return;
     if (t.dataset.section) { location.hash = t.dataset.section; setSection(t.dataset.section); return; }
     if (t.dataset.goto) return go(Number(t.dataset.goto));
     if (t.dataset.filter) { state.filter = t.dataset.filter; render(); return; }
     switch (t.dataset.action) {
-      case "flip": state.revealed = !state.revealed; render(); break;
+      case "flip": state.revealed = !state.revealed; state.spokenOpen = false; render(); break;
       case "prev": step(-1); break;
       case "next": step(1); break;
       case "known": setMark("known"); break;
       case "learning": setMark("learning"); break;
       case "ask": if (window.LiveKanjiGrammar) window.LiveKanjiGrammar.open(); break;
+    }
+  });
+
+  // Keyboard users can open the spoken version with Enter or Space.
+  app.addEventListener("keydown", (e) => {
+    if ((e.key === "Enter" || e.key === " ") && e.target.classList && e.target.classList.contains("formal")) {
+      e.preventDefault(); state.spokenOpen = !state.spokenOpen; render();
+      const el = app.querySelector(".formal"); if (el) el.focus();
     }
   });
 

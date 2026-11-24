@@ -60,7 +60,8 @@
     return "The learner is looking at this flash card from the \"" + cur.deck + "\" deck:\n" +
       "Word: " + c.word + " (" + c.reading + ") = " + c.meaning + "\n" +
       "Example: " + c.example + "\nReading: " + c.exampleReading + "\nTranslation: " + c.exampleEn +
-      (c.tip ? "\nUsage note: " + c.tip : "");
+      (c.tip ? "\nUsage note: " + c.tip : "") +
+      (c.casual ? "\nEveryday spoken version: " + c.casual + " (" + c.casualReading + ")" : "");
   }
 
   function renderContext() {
