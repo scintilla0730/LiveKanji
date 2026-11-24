@@ -4,8 +4,8 @@ Learn real, everyday Japanese the way it's actually used in Japan.
 
 ## What's in this first version
 
-- **Everyday**: 30 words you see on station signs, shop doors, konbini counters and menus.
-- **Business**: 30 words and phrases for working in Japan (email, phone, meetings, office life), with tips on how they're used.
+- **Everyday**: 60 words you see on station signs, shop doors, konbini counters and menus.
+- **Business**: 60 words and phrases for working in Japan (email, phone, meetings, office life), with tips on how they're used.
 - **Videos** (coming soon): paste a YouTube, TikTok or Instagram link and get readings and grammar explanations.
 
 Each card shows the word, its reading in hiragana, the meaning, where you'll see it, and an example sentence.
