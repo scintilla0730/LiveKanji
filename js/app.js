@@ -26,7 +26,6 @@
     section: "everyday",
     index: 0,
     revealed: false,
-    showKana: false,
     filter: "all"                       // all | learning | new
   };
 
@@ -99,8 +98,7 @@
         "<div>" +
           '<div class="label">Example</div>' +
           '<p class="ex-jp" lang="ja">' + highlight(card.example, card.word) + "</p>" +
-          (state.showKana ? '<p class="ex-kana" lang="ja">' + esc(card.exampleReading) + "</p>" : "") +
-          '<button class="link-btn" data-action="kana">' + (state.showKana ? "Hide reading" : "Show reading in kana") + "</button>" +
+          '<p class="ex-kana" lang="ja">' + esc(card.exampleReading) + "</p>" +
           '<p class="ex-en">' + esc(card.exampleEn) + "</p>" +
         "</div>" +
         (card.tip ? '<div class="tip"><div class="label">How it\'s used</div>' + esc(card.tip) + "</div>" : "") +
@@ -180,7 +178,6 @@
     if (!SECTIONS.some((s) => s.id === id)) id = "everyday";
     state.section = id;
     state.revealed = false;
-    state.showKana = false;
     state.filter = "all";
     if (DECKS[id]) state.index = Math.min(saved.pos[id] || 0, DECKS[id].cards.length - 1);
     render();
@@ -192,7 +189,6 @@
     const n = deck.cards.length;
     state.index = (i + n) % n;
     state.revealed = false;
-    state.showKana = false;
     saved.pos[deck.id] = state.index;
     save();
     render();
@@ -224,7 +220,6 @@
     if (t.dataset.filter) { state.filter = t.dataset.filter; render(); return; }
     switch (t.dataset.action) {
       case "flip": state.revealed = !state.revealed; render(); break;
-      case "kana": state.showKana = !state.showKana; render(); break;
       case "prev": step(-1); break;
       case "next": step(1); break;
       case "known": setMark("known"); break;
