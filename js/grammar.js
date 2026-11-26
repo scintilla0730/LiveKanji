@@ -80,7 +80,8 @@
     '<div class="g-head"><div class="g-modes" role="tablist">' +
       '<button type="button" role="tab" data-mode="ask" aria-selected="true">Ask</button>' +
       '<button type="button" role="tab" data-mode="roleplay" aria-selected="false">Role-play</button></div>' +
-    '<button type="button" class="g-close" aria-label="Close">×</button></div>' +
+    '<div class="g-tools"><button type="button" class="g-size" aria-label="Make the window bigger" aria-pressed="false"></button>' +
+    '<button type="button" class="g-close" aria-label="Close">×</button></div></div>' +
     '<div class="g-context" hidden></div>' +
     '<div class="g-log" aria-live="polite"></div>' +
     '<div class="g-chips"></div>' +
@@ -287,6 +288,24 @@
 
   fab.addEventListener("click", () => open());
   $(".g-close").addEventListener("click", close);
+
+  // Bigger / smaller window. The choice is remembered on this device.
+  const SIZE_KEY = "livekanji:helper-big";
+  const sizeBtn = $(".g-size");
+  const ICON_BIG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>';
+  const ICON_SMALL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14h6v6"/><path d="M20 10h-6V4"/><path d="M14 10l7-7"/><path d="M3 21l7-7"/></svg>';
+  function setBig(big) {
+    panel.classList.toggle("big", big);
+    sizeBtn.innerHTML = big ? ICON_SMALL : ICON_BIG;
+    sizeBtn.setAttribute("aria-pressed", String(big));
+    sizeBtn.setAttribute("aria-label", big ? "Make the window smaller" : "Make the window bigger");
+    sizeBtn.title = big ? "Smaller window" : "Bigger window";
+    try { localStorage.setItem(SIZE_KEY, big ? "1" : "0"); } catch (e) { /* storage unavailable */ }
+  }
+  let startBig = false;
+  try { startBig = localStorage.getItem(SIZE_KEY) === "1"; } catch (e) { /* storage unavailable */ }
+  setBig(startBig);
+  sizeBtn.addEventListener("click", () => setBig(!panel.classList.contains("big")));
   panel.querySelectorAll("[data-mode]").forEach((b) => b.addEventListener("click", () => setMode(b.dataset.mode)));
   stopBtn.addEventListener("click", () => ctl && ctl.abort());
   newBtn.addEventListener("click", () => {
