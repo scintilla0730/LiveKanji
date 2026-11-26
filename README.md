@@ -24,6 +24,7 @@ To make a single shareable file: `node scripts/build-preview.mjs` creates `dist/
 - `index.html`: the page
 - `css/styles.css`: the look
 - `js/app.js`: how the app behaves
+- `js/align.js`: lines up each sentence with its kana reading, so hovering a word highlights its reading
 - `js/speech.js`: reads Japanese aloud (uses the device's built-in Japanese voice)
 - `js/grammar.js`: the grammar helper and keigo role-play (asks Claude; appears only when the page is opened through Claude)
 - `data/everyday.js`, `data/business.js`: the word lists (edit these to add words)

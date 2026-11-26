@@ -142,10 +142,18 @@
     return '<button class="speed" type="button" data-action="speed" aria-pressed="' + slow + '">' + "Slow" + "</button>";
   }
 
+  // A sentence and its kana line, split into matching pieces: hover (or tap)
+  // a kanji word to highlight its reading below.
+  function pairLines(sentence, reading, word, pair) {
+    const A = window.LiveKanjiAlign;
+    const h = A ? A.render(sentence, reading, word, pair) : { sentence: highlight(sentence, word), reading: esc(reading) };
+    return '<p class="ex-jp" lang="ja">' + h.sentence + "</p>" +
+      '<p class="ex-kana" lang="ja">' + h.reading + "</p>";
+  }
+
   function exampleLines(card) {
     return '<div class="ex-head"><span class="label">Example</span>' + sayBtn(card.example, "Play the example sentence") + speedBtn() + "</div>" +
-      '<p class="ex-jp" lang="ja">' + highlight(card.example, card.word) + "</p>" +
-      '<p class="ex-kana" lang="ja">' + esc(card.exampleReading) + "</p>" +
+      pairLines(card.example, card.exampleReading, card.word, "ex") +
       '<p class="ex-en">' + esc(card.exampleEn) + "</p>";
   }
 
@@ -157,8 +165,7 @@
       '<span class="spoken-hint"><span class="on-hover">Hover over the sentence to see the everyday spoken version</span>' +
       '<span class="on-touch">' + (state.spokenOpen ? "Tap to hide the spoken version" : "Tap the sentence to see the everyday spoken version") + "</span></span>" +
       '<div class="spoken"><div class="ex-head"><span class="label">Everyday spoken version · <span lang="ja">話し言葉</span></span>' + sayBtn(card.casual, "Play the spoken version") + "</div>" +
-        '<p class="ex-jp" lang="ja">' + esc(card.casual) + "</p>" +
-        '<p class="ex-kana" lang="ja">' + esc(card.casualReading) + "</p>" +
+        pairLines(card.casual, card.casualReading, "", "sp") +
         (card.casualNote ? '<p class="spoken-note">' + esc(card.casualNote) + "</p>" : "") +
       "</div></div>";
   }
@@ -249,6 +256,10 @@
     const sayEl = e.target.closest("[data-say]");
     if (sayEl) { speech() && speech().speak(sayEl.dataset.say); return; }
     if (e.target.closest("[data-action=speed]")) { speech() && speech().setSlow(!speech().isSlow()); render(); return; }
+    // Phones have no hover: tapping a kanji word shows its reading instead
+    // of opening the spoken version.
+    const kseg = e.target.closest(".seg.k");
+    if (kseg && noHover.matches) { lightUp(kseg); return; }
     if (e.target.closest(".formal")) { state.spokenOpen = !state.spokenOpen; render(); return; }
     const t = e.target.closest("button");
     if (!t) return;
@@ -264,6 +275,15 @@
       case "ask": if (window.LiveKanjiGrammar) window.LiveKanjiGrammar.open("ask"); break;
     }
   });
+
+  const noHover = window.matchMedia("(hover: none)");
+  function lightUp(seg) {
+    app.querySelectorAll(".seg.hl").forEach((x) => x.classList.remove("hl"));
+    if (!seg) return;
+    app.querySelectorAll('.seg[data-pair="' + seg.dataset.pair + '"][data-seg="' + seg.dataset.seg + '"]').forEach((x) => x.classList.add("hl"));
+  }
+  app.addEventListener("mouseover", (e) => { if (!noHover.matches) lightUp(e.target.closest(".seg.k")); });
+  app.addEventListener("mouseleave", () => lightUp(null));
 
   // Keyboard users can open the spoken version with Enter or Space.
   app.addEventListener("keydown", (e) => {

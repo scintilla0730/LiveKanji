@@ -188,6 +188,13 @@ main .wrap { padding-block: 24px 48px; }
 .demo { border-top: 1px dashed var(--line); padding-top: 18px; }
 .demo .ex-jp ruby rt { font-size: 10px; color: var(--accent); }
 
+/* Sentence ↔ reading: hovering a word lights up its kana */
+.seg.target { background: var(--accent-soft); border-radius: 3px; }
+.seg.k { border-radius: 3px; transition: background-color .12s ease, color .12s ease; }
+.ex-jp .seg.k { cursor: help; }
+.seg.hl { background: var(--sign); color: var(--sign-ink); }
+.ex-kana .seg.hl { padding: 0 2px; }
+
 /* Voice buttons */
 .card { position: relative; }
 .say-word { position: absolute; top: 12px; right: 12px; z-index: 1; }
