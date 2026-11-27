@@ -1,65 +1,66 @@
-// Grammar helper: a small chat window that talks to Claude.
-//   Ask:       questions about the grammar in the current card, or anything else.
-//   Role-play: practise business keigo in a scene. Claude plays your boss, a
-//              client or a junior colleague and gives feedback on each reply,
-//              especially on humble vs. respectful forms and on how they flip
-//              when you talk about your own boss to someone outside the company.
-// It only appears when the page runs inside Claude, which provides
-// window.claude. Opened as a plain file, the button stays hidden.
+// 语法助手：一个和 Claude 对话的小窗口。
+//   提问：    针对当前卡片里的语法提问，或问任何日语问题。
+//   角色扮演：在职场场景里练习商务敬语。Claude 扮演你的上司、客户或新人，
+//             每次回复后给出点评，重点是谦让语和尊敬语，以及对外提到自己上司时
+//             两者如何“翻转”。
+// 只有在 Claude 里打开页面时才会出现（需要 window.claude）。
+// 直接打开文件时，按钮保持隐藏。
 (function () {
   "use strict";
 
-  let sample = null;          // Claude's ask function, once available
+  let sample = null;          // Claude 的提问函数（可用时）
   let mode = "ask";           // "ask" | "roleplay"
-  let scene = null;           // the active role-play scene
-  let turns = [];             // this conversation: [{role, content}]
-  let cardKey = "";           // which card an Ask conversation is about
-  let ctl = null;             // AbortController for the running answer
-  let blocked = false;        // the viewer declined, or Claude is unavailable here
+  let scene = null;           // 当前角色扮演场景
+  let turns = [];             // 本次对话：[{role, content}]
+  let cardKey = "";           // 提问对话对应的卡片
+  let ctl = null;             // 正在进行的回答的 AbortController
+  let blocked = false;        // 用户拒绝授权，或这里无法使用 Claude
 
+  // 给 Claude 的指示用英文写（更稳定），但要求它用简体中文回答。
   const ASK_RULES =
-    "You are a friendly Japanese teacher helping a foreigner who lives or works in Japan. " +
-    "Answer in simple, clear English. Explain WHY the grammar works the way it does, not just what it means. " +
-    "Whenever you write kanji, add the reading in hiragana in brackets the first time, like 曲がる(まがる). " +
+    "You are a friendly Japanese teacher helping a Chinese-speaking learner who lives or works in Japan. " +
+    "Answer in Simplified Chinese (简体中文). Explain WHY the grammar works the way it does, not just what it means. " +
+    "You may compare with Chinese when it helps, and point out where a kanji word means something different in Chinese (false friends). " +
+    "Whenever you write Japanese with kanji, add the reading in hiragana in brackets the first time, like 曲がる(まがる). " +
     "Point out when something is casual, spoken or polite, and give the more polite or more casual version when useful. " +
-    "Keep answers short: about 120 words unless the learner asks for more. " +
+    "Keep answers short: about 200 Chinese characters unless the learner asks for more. " +
     "Write plain text only: no Markdown headings, bold or tables. Short lines and '-' bullets are fine.";
 
   const SCENES = [
-    { id: "boss", title: "Report to your boss",
-      you: "a junior employee", claude: "your section manager, 鈴木課長",
-      lesson: "Respectful words for what your boss does, humble words for what you do.",
+    { id: "boss", title: "向上司汇报",
+      you: "新员工", claude: "你的课长 鈴木課長",
+      lesson: "上司的动作用尊敬语，自己的动作用谦让语。",
       setup: "The learner is a junior employee at a Japanese company. You are 鈴木課長, their section manager. The learner needs to tell you that the client meeting report is finished and ask when you would like to look at it." },
-    { id: "phone", title: "A client calls for your boss",
-      you: "answering the office phone", claude: "山田さん, a client from 東西商事",
-      lesson: "The flip: to outsiders, your own boss is on your side. Use humble words and drop 課長 and さん: 鈴木は外出しております.",
+    { id: "phone", title: "客户打电话找你的上司",
+      you: "接公司电话", claude: "东西商事的客户 山田さん",
+      lesson: "翻转：对公司外部的人，自己的上司算“自己人”。要用谦让语，并去掉「課長」和「さん」：鈴木は外出しております。",
       setup: "The learner answers the phone at their company. You are 山田, a client from 東西商事, calling for the learner's boss 鈴木課長, who is out of the office until 3 p.m. The learner must explain this and offer a call back." },
-    { id: "visit", title: "Visit a client's office",
-      you: "visiting a client", claude: "the receptionist, then 佐藤部長",
-      lesson: "Humble words for your own actions (伺う, 参る), respectful words for the client (いらっしゃる).",
+    { id: "visit", title: "拜访客户公司",
+      you: "去拜访客户", claude: "前台，然后是 佐藤部長",
+      lesson: "自己的动作用谦让语（伺う、参る），客户的动作用尊敬语（いらっしゃる）。",
       setup: "The learner arrives at a client's office for a 2 p.m. meeting with 佐藤部長. You first play the receptionist, then 佐藤部長 when they arrive." },
-    { id: "guest", title: "A guest arrives for your boss",
-      you: "greeting a visitor", claude: "a visiting client, 田中様",
-      lesson: "Respectful words for the guest, humble words for your own boss: 鈴木がただいま参ります.",
+    { id: "guest", title: "客人来找你的上司",
+      you: "接待来访客人", claude: "来访的客户 田中様",
+      lesson: "对客人用尊敬语，对自己的上司用谦让语：鈴木がただいま参ります。",
       setup: "A client, 田中様, arrives at the learner's office to meet the learner's boss 鈴木課長. The learner must greet the guest, show them to the meeting room and say the boss is coming right away." },
-    { id: "senior", title: "You are the boss",
-      you: "the section manager", claude: "a new junior employee",
-      lesson: "Hear keigo from the other side. The junior sometimes makes a keigo mistake: can you spot it?",
-      setup: "Roles are flipped: the learner is the section manager and you are a new junior employee reporting on your work. Speak to the learner in keigo, but about once every two or three lines make one typical keigo mistake (for example using a humble verb for the boss's action). In Feedback, praise the learner if they spotted a mistake, and otherwise reveal your mistake and the correct form." }
+    { id: "senior", title: "你来当上司",
+      you: "课长", claude: "刚入职的新人",
+      lesson: "站在另一边听敬语。新人偶尔会用错敬语，你能发现吗？",
+      setup: "Roles are flipped: the learner is the section manager and you are a new junior employee reporting on your work. Speak to the learner in keigo, but about once every two or three lines make one typical keigo mistake (for example using a humble verb for the boss's action). In 点评, praise the learner if they spotted a mistake, and otherwise reveal your mistake and the correct form." }
   ];
 
   function rpRules(s) {
-    return "You are running a Japanese business role-play to help a foreign learner practise keigo.\n" +
+    return "You are running a Japanese business role-play to help a Chinese-speaking learner practise keigo.\n" +
       "Scene: " + s.setup + "\n" +
       "Each of your replies has exactly two parts.\n" +
       "Part 1: your next line in the scene, in natural Japanese as your character would really say it (1 to 3 sentences). " +
-      "On the next line, the same line in hiragana. On the next line, an English translation in brackets.\n" +
-      "Part 2: a line starting with 'Feedback:' with short feedback in English on the learner's LAST message. Say what was good and correct any mistake, showing the corrected Japanese. " +
+      "On the next line, the same line in hiragana. On the next line, a Simplified Chinese translation in brackets.\n" +
+      "Part 2: a line starting with '点评：' with short feedback in Simplified Chinese on the learner's LAST message. Say what was good and correct any mistake, showing the corrected Japanese. " +
       "Pay special attention to whose action it is: respectful forms (尊敬語) for the other person's or a superior's actions, humble forms (謙譲語) for your own side's actions, " +
       "and remember that when talking to someone outside the company, the learner's own boss counts as the learner's side (no さん or title after the name, humble verbs). " +
-      "If the learner wrote in English or romaji, show how to say it in Japanese.\n" +
-      "In your very first reply, instead of Feedback write a line starting with 'Your goal:' telling the learner in one English sentence what to do.\n" +
-      "Keep the scene moving and end it naturally after about 6 exchanges, then give a short summary of what the learner did well and one thing to practise.\n" +
+      "If the learner wrote in Chinese or romaji, show how to say it in Japanese.\n" +
+      "In your very first reply, instead of 点评 write a line starting with '你的任务：' telling the learner in one Simplified Chinese sentence what to do.\n" +
+      "Keep the scene moving and end it naturally after about 6 exchanges, then give a short summary in Simplified Chinese of what the learner did well and one thing to practise.\n" +
       "Plain text only: no Markdown.";
   }
 
@@ -68,27 +69,27 @@
   fab.className = "grammar-fab";
   fab.type = "button";
   fab.hidden = true;
-  fab.innerHTML = '<span lang="ja">文法</span> Grammar &amp; role-play';
-  fab.setAttribute("aria-label", "Open the grammar helper");
+  fab.innerHTML = '<span lang="ja">文法</span> 语法 · 角色扮演';
+  fab.setAttribute("aria-label", "打开语法助手");
 
   const panel = document.createElement("aside");
   panel.className = "grammar";
   panel.id = "grammar";
   panel.hidden = true;
-  panel.setAttribute("aria-label", "Grammar helper");
+  panel.setAttribute("aria-label", "语法助手");
   panel.innerHTML =
     '<div class="g-head"><div class="g-modes" role="tablist">' +
-      '<button type="button" role="tab" data-mode="ask" aria-selected="true">Ask</button>' +
-      '<button type="button" role="tab" data-mode="roleplay" aria-selected="false">Role-play</button></div>' +
-    '<div class="g-tools"><button type="button" class="g-size" aria-label="Make the window bigger" aria-pressed="false"></button>' +
-    '<button type="button" class="g-close" aria-label="Close">×</button></div></div>' +
+      '<button type="button" role="tab" data-mode="ask" aria-selected="true">提问</button>' +
+      '<button type="button" role="tab" data-mode="roleplay" aria-selected="false">角色扮演</button></div>' +
+    '<div class="g-tools"><button type="button" class="g-size" aria-label="放大窗口" aria-pressed="false"></button>' +
+    '<button type="button" class="g-close" aria-label="关闭">×</button></div></div>' +
     '<div class="g-context" hidden></div>' +
     '<div class="g-log" aria-live="polite"></div>' +
     '<div class="g-chips"></div>' +
-    '<form class="g-form"><textarea id="g-input" rows="2" placeholder="Type your question here…" aria-label="Your message"></textarea>' +
-    '<div class="g-actions"><button type="button" class="g-new">New chat</button>' +
-    '<button type="button" class="g-stop" hidden>Stop</button>' +
-    '<button type="submit" class="g-send">Ask</button></div></form>';
+    '<form class="g-form"><textarea id="g-input" rows="2" placeholder="在这里输入你的问题…" aria-label="你的消息"></textarea>' +
+    '<div class="g-actions"><button type="button" class="g-new">新对话</button>' +
+    '<button type="button" class="g-stop" hidden>停止</button>' +
+    '<button type="submit" class="g-send">提问</button></div></form>';
   document.body.append(fab, panel);
 
   const $ = (sel) => panel.querySelector(sel);
@@ -106,9 +107,9 @@
     const c = cur.card;
     return "The learner is looking at this flash card from the \"" + cur.deck + "\" deck:\n" +
       "Word: " + c.word + " (" + c.reading + ") = " + c.meaning + "\n" +
-      "Example: " + c.example + "\nReading: " + c.exampleReading + "\nTranslation: " + c.exampleEn +
+      "Example: " + c.example + "\nReading: " + c.exampleReading + "\nChinese translation: " + c.translation +
       (c.tip ? "\nUsage note: " + c.tip : "") +
-      (c.casual ? "\nEveryday spoken version: " + c.casual + " (" + c.casualReading + ")" : "");
+      (c.casual ? "\nEveryday spoken version: " + c.casual + " (" + c.casualReading + ")" + (c.casualNote ? " — " + c.casualNote : "") : "");
   }
 
   function el(tag, cls, text) {
@@ -139,24 +140,24 @@
       if (key !== cardKey) { cardKey = key; clearChat(); }
       ctxBox.hidden = !(cur && cur.card);
       if (cur && cur.card) {
-        ctxBox.append(el("div", "label", "About this sentence"));
+        ctxBox.append(el("div", "label", "关于这句"));
         const jp = el("p", "", cur.card.example); jp.lang = "ja"; ctxBox.append(jp);
       }
       if (cur && cur.card && turns.length === 0) {
         [
-          "Explain the grammar of this sentence step by step",
-          "Why is " + cur.card.word + " used this way here?",
-          "How would I say this more politely, or more casually?"
+          "一步一步讲解这句的语法",
+          "这里为什么用「" + cur.card.word + "」？",
+          "这句话更礼貌或更随意的说法是什么？"
         ].forEach((q) => {
           const b = el("button", "", q); b.type = "button";
           b.addEventListener("click", () => send(q));
           chips.append(b);
         });
       }
-      emptyNote("Pick a question below or type your own. Answers come from Claude.");
-      input.placeholder = "Type your question here…";
-      sendBtn.textContent = "Ask";
-      newBtn.textContent = "New chat";
+      emptyNote("选一个下面的问题，或者自己输入。回答来自 Claude。");
+      input.placeholder = "在这里输入你的问题…";
+      sendBtn.textContent = "提问";
+      newBtn.textContent = "新对话";
       form.hidden = false;
       return;
     }
@@ -164,11 +165,11 @@
     // Role-play
     if (!scene) {
       ctxBox.hidden = false;
-      ctxBox.append(el("div", "label", "Practise business keigo"));
-      ctxBox.append(el("p", "g-ctx-note", "Pick a scene. Claude plays the other person and gives feedback after each of your replies. Answer in Japanese; romaji or English is fine if you get stuck."));
+      ctxBox.append(el("div", "label", "练习商务敬语"));
+      ctxBox.append(el("p", "g-ctx-note", "选一个场景。Claude 扮演对方，你每回复一句都会给出点评。请用日语回答；卡住时也可以用中文或罗马字。"));
       SCENES.forEach((s) => {
         const b = el("button", "g-scene"); b.type = "button";
-        b.append(el("strong", "", s.title), el("span", "", "You: " + s.you + " · Claude: " + s.claude), el("em", "", s.lesson));
+        b.append(el("strong", "", s.title), el("span", "", "你：" + s.you + " · Claude：" + s.claude), el("em", "", s.lesson));
         b.addEventListener("click", () => startScene(s));
         chips.append(b);
       });
@@ -176,11 +177,11 @@
       return;
     }
     ctxBox.hidden = false;
-    ctxBox.append(el("div", "label", "Role-play: " + scene.title));
+    ctxBox.append(el("div", "label", "角色扮演：" + scene.title));
     ctxBox.append(el("p", "g-ctx-note", scene.lesson));
-    input.placeholder = "Reply in Japanese…";
-    sendBtn.textContent = "Send";
-    newBtn.textContent = "Change scene";
+    input.placeholder = "用日语回复…";
+    sendBtn.textContent = "发送";
+    newBtn.textContent = "换场景";
     form.hidden = false;
   }
 
@@ -198,17 +199,17 @@
     if (!sp || !sp.available()) return;
     const line = (text.split("\n").find((l) => /[぀-ヿ一-龯]/.test(l)) || "").trim();
     if (!line) return;
-    const b = el("button", "g-play", "▶ Play line"); b.type = "button";
+    const b = el("button", "g-play", "▶ 播放这句"); b.type = "button";
     b.addEventListener("click", () => sp.speak(line));
     bubbleEl.append(document.createElement("br"), b);
   }
 
   const ERRORS = {
-    rate_limited: "Too many messages at once. Wait a moment, then try again.",
-    session_expired: "Please sign in to Claude again, then try again.",
-    refused: "Claude couldn't answer that one. Try saying it a different way.",
-    empty_completion: "No answer came back. Try a shorter message.",
-    prompt_too_large: "This chat got too long. Start a new one and try again."
+    rate_limited: "消息发得太频繁了，请稍等再试。",
+    session_expired: "请重新登录 Claude 后再试。",
+    refused: "Claude 无法回答这个问题，换个说法试试。",
+    empty_completion: "没有收到回答，试试更短的消息。",
+    prompt_too_large: "对话太长了，请开始新对话再试。"
   };
 
   function startScene(s) {
@@ -216,7 +217,7 @@
     scene = s;
     clearChat();
     renderPanel();
-    send("Start the scene.", { hidden: true });
+    send("开始这个场景。", { hidden: true });
   }
 
   async function send(text, opts) {
@@ -226,7 +227,7 @@
     chips.textContent = "";
     if (!hidden) bubble("user", text);
     turns.push({ role: "user", content: text });
-    const out = bubble("assistant", "Thinking…");
+    const out = bubble("assistant", "思考中…");
     out.classList.add("pending");
     ctl = new AbortController();
     sendBtn.hidden = true; stopBtn.hidden = false;
@@ -245,12 +246,12 @@
     } catch (e) {
       out.classList.remove("pending");
       const code = e && e.code;
-      if (code === "cancelled") { out.textContent = (e.text || "") + (e.text ? "\n\n(stopped)" : "Stopped."); }
+      if (code === "cancelled") { out.textContent = (e.text || "") + (e.text ? "\n\n（已停止）" : "已停止。"); }
       else if (["not_granted", "sampling_disabled", "not_declared", "capability_disabled", "capability_removed"].includes(code)) {
-        out.textContent = "The helper isn't available here. Claude needs your permission to answer; you can allow it from this page's permissions menu.";
+        out.textContent = "这里暂时无法使用助手。Claude 需要你的授权才能回答，可以在页面的权限菜单里允许。";
         blocked = true;
       } else {
-        out.textContent = (e && e.text ? e.text + "\n\n" : "") + (ERRORS[code] || "Something went wrong. Try again.");
+        out.textContent = (e && e.text ? e.text + "\n\n" : "") + (ERRORS[code] || "出了点问题，请再试一次。");
         out.classList.add("error");
       }
       turns.pop(); // forget the unanswered message
@@ -298,8 +299,8 @@
     panel.classList.toggle("big", big);
     sizeBtn.innerHTML = big ? ICON_SMALL : ICON_BIG;
     sizeBtn.setAttribute("aria-pressed", String(big));
-    sizeBtn.setAttribute("aria-label", big ? "Make the window smaller" : "Make the window bigger");
-    sizeBtn.title = big ? "Smaller window" : "Bigger window";
+    sizeBtn.setAttribute("aria-label", big ? "缩小窗口" : "放大窗口");
+    sizeBtn.title = big ? "缩小窗口" : "放大窗口";
     try { localStorage.setItem(SIZE_KEY, big ? "1" : "0"); } catch (e) { /* storage unavailable */ }
   }
   let startBig = false;

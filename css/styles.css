@@ -21,8 +21,8 @@
   --shadow: 0 1px 2px rgba(27, 34, 48, .06), 0 8px 24px rgba(27, 34, 48, .06);
 
   --font-jp: "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", sans-serif;
-  --font-head: "Space Grotesk", "Inter", system-ui, sans-serif;
-  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-head: "Space Grotesk", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --font-body: "Inter", "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -53,6 +53,8 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 button { font: inherit; color: inherit; }
+/* 日语部分用日文字体，中文部分用简体中文字体 */
+:lang(ja) { font-family: var(--font-jp); }
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 
 .wrap {
@@ -136,7 +138,7 @@ main .wrap { padding-block: 24px 48px; }
 .ex-jp { font: 500 20px/1.6 var(--font-jp); margin: 0; }
 .ex-jp mark { background: var(--accent-soft); color: inherit; border-radius: 3px; padding: 0 2px; }
 .ex-kana { font: 400 14px/1.6 var(--font-jp); color: var(--muted); margin: 2px 0 0; }
-.ex-en { margin: 6px 0 0; }
+.ex-tr { margin: 6px 0 0; }
 .tip { background: var(--accent-soft); border-radius: 10px; padding: 10px 12px; font-size: 14px; }
 .link-btn { border: 0; background: none; color: var(--accent); cursor: pointer; padding: 0; font-size: 13px; font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
 

@@ -1,30 +1,34 @@
 # LiveKanji
 
-Learn real, everyday Japanese the way it's actually used in Japan.
+用中文学习日本人真正在用的日语。
 
-## What's in this first version
+## 现在有什么
 
-- **Everyday**: 60 words you see on station signs, shop doors, konbini counters and menus.
-- **Business**: 60 words and phrases for working in Japan (email, phone, meetings, office life), with tips on how they're used.
-- **Videos** (coming soon): paste a YouTube, TikTok or Instagram link and get readings and grammar explanations.
+- **日常**：60 个在日本生活中真正会遇到的词：车站指示牌、店门口、便利店收银台、餐厅、租房、诊所和防灾。
+- **商务**：60 个在日本工作要用的词和句子：邮件、电话、会议和职场生活。
+  - 鼠标移到例句上（手机上点击例句），可以看到它在**日常口语**里怎么说，比如 承知いたしました → わかった。
+- **单词卡**
+  - 先只显示日语，点击后显示读音、中文意思、例句、例句读音和中文翻译。
+  - 鼠标移到例句里的汉字词上（手机上点击），下方读音里对应的假名会一起高亮。
+  - 可以标记「我会了」或「还在学」，进度保存在浏览器里。
+- **发音**：喇叭按钮朗读单词、例句和口语说法，还有慢速模式，适合跟读练习。用的是设备自带的日语语音。
+- **语法助手和敬语角色扮演**：用中文向 Claude 提问语法，或在职场场景里练习敬语（Claude 扮演上司、客户或新人，并用中文点评）。只有在 claude.ai 里打开时才会出现。
+- **视频**（即将推出）：粘贴 YouTube、TikTok 或 Instagram 链接，生成带读音和中文语法讲解的课程。
 
-Each card shows the word, its reading in hiragana, the meaning, where you'll see it, and an example sentence.
-"I know it" and "Still learning" are saved in your browser.
+一个版本同时适用于手机和电脑。
 
-One website works on both phones and computers.
+## 怎么打开
 
-## How to open it
+用浏览器打开 `index.html` 即可，无需安装。
 
-Open `index.html` in any browser. No installation needed.
+生成单个可分享的文件：运行 `node scripts/build-preview.mjs`，会生成 `dist/livekanji.html`。
 
-To make a single shareable file: `node scripts/build-preview.mjs` creates `dist/livekanji.html`.
+## 文件结构
 
-## Project layout
-
-- `index.html`: the page
-- `css/styles.css`: the look
-- `js/app.js`: how the app behaves
-- `js/align.js`: lines up each sentence with its kana reading, so hovering a word highlights its reading
-- `js/speech.js`: reads Japanese aloud (uses the device's built-in Japanese voice)
-- `js/grammar.js`: the grammar helper and keigo role-play (asks Claude; appears only when the page is opened through Claude)
-- `data/everyday.js`, `data/business.js`: the word lists (edit these to add words)
+- `index.html`：页面
+- `css/styles.css`：外观
+- `js/app.js`：页面行为
+- `js/align.js`：把例句和读音逐词对齐，鼠标移到词上时高亮对应读音
+- `js/speech.js`：朗读日语（使用设备自带的日语语音）
+- `js/grammar.js`：语法助手和敬语角色扮演（调用 Claude；只在 Claude 中打开时出现）
+- `data/everyday.js`、`data/business.js`：单词表（在这里添加新词）

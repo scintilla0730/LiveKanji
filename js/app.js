@@ -1,13 +1,13 @@
-// LiveKanji — first version.
-// Plain JavaScript, no build step. Decks come from data/*.js.
+// LiveKanji：用中文学真实的日语。
+// 纯 JavaScript，无需构建。单词数据在 data/*.js。
 (function () {
   "use strict";
 
   const DECKS = window.LIVEKANJI_DECKS || {};
   const SECTIONS = [
-    { id: "everyday", label: "Everyday", jp: "日常" },
-    { id: "business", label: "Business", jp: "ビジネス" },
-    { id: "videos", label: "Videos", jp: "動画", soon: true }
+    { id: "everyday", label: "日常", jp: "日常会話" },
+    { id: "business", label: "商务", jp: "ビジネス" },
+    { id: "videos", label: "视频", jp: "動画", soon: true }
   ];
   const STORE_KEY = "livekanji:v1";
 
@@ -71,10 +71,10 @@
   function header() {
     return '<header class="top"><div class="wrap">' +
       '<div class="brand"><span class="brand-name">Live<span>Kanji</span></span><span class="brand-jp">生きた日本語</span></div>' +
-      '<nav class="tabs" role="tablist" aria-label="Sections">' +
+      '<nav class="tabs" role="tablist" aria-label="栏目">' +
       SECTIONS.map((s) =>
         '<button class="tab" role="tab" data-section="' + s.id + '" aria-selected="' + (state.section === s.id) + '">' +
-        esc(s.label) + ' <span class="jp">' + esc(s.jp) + "</span>" + (s.soon ? '<span class="soon">soon</span>' : "") +
+        esc(s.label) + ' <span class="jp">' + esc(s.jp) + "</span>" + (s.soon ? '<span class="soon">即将推出</span>' : "") +
         "</button>").join("") +
       "</nav></div></header>";
   }
@@ -100,33 +100,33 @@
     if (state.revealed) {
       back = '<div class="card-back" id="back">' +
         (card.casual ? formalBlock(card) : "<div>" + exampleLines(card) + "</div>") +
-        '<button class="ask-btn" data-action="ask" hidden>' + icon.ask + "Ask about this grammar</button>" +
+        '<button class="ask-btn" data-action="ask" hidden>' + icon.ask + "问问这句的语法</button>" +
       "</div>";
     }
 
-    return '<div class="deck-head" aria-label="Your progress">' +
-        '<div class="progress-text"><strong>' + known + " of " + total + " known</strong>" +
-        (learning ? '<span class="learning-count">' + learning + " still learning</span>" : "") + "</div>" +
+    return '<div class="deck-head" aria-label="学习进度">' +
+        '<div class="progress-text"><strong>已掌握 ' + known + " / " + total + "</strong>" +
+        (learning ? '<span class="learning-count">还在学 ' + learning + " 个</span>" : "") + "</div>" +
         '<div class="progress" aria-hidden="true">' +
           '<div class="known" style="width:' + (known / total * 100) + '%"></div>' +
           '<div class="learning" style="width:' + (learning / total * 100) + '%"></div>' +
         "</div></div>" +
-      '<div class="layout"><section aria-label="Flash card">' +
-        '<div class="counter"><span>Card ' + (state.index + 1) + " of " + total + "</span><span>" + esc(card.where) + "</span></div>" +
+      '<div class="layout"><section aria-label="单词卡">' +
+        '<div class="counter"><span>第 ' + (state.index + 1) + " / " + total + " 张</span><span>" + esc(card.where) + "</span></div>" +
         '<article class="card" id="card">' +
-          (speech() ? '<span class="say-word">' + sayBtn(card.word, "Play the word") + "</span>" : "") +
+          (speech() ? '<span class="say-word">' + sayBtn(card.word, "播放单词") + "</span>" : "") +
           '<button class="card-front" data-action="flip" aria-expanded="' + state.revealed + '" aria-controls="back">' +
             '<span class="word' + (isLong ? " long" : "") + '" lang="ja">' + esc(card.word) + "</span>" +
             (state.revealed
               ? '<span class="reading" lang="ja">' + esc(card.reading) + '</span><span class="meaning">' + esc(card.meaning) + "</span>"
-              : '<span class="hint">Tap to see the reading and meaning</span>') +
+              : '<span class="hint">点击查看读音和意思</span>') +
           "</button>" + back +
         "</article>" +
         '<div class="controls">' +
-          '<button class="btn" data-action="prev" aria-label="Previous card">' + icon.prev + "</button>" +
-          '<button class="btn warn" data-action="learning" aria-pressed="' + (mark === "learning") + '">' + icon.redo + "Still learning</button>" +
-          '<button class="btn good" data-action="known" aria-pressed="' + (mark === "known") + '">' + icon.check + "I know it</button>" +
-          '<button class="btn" data-action="next" aria-label="Next card">' + icon.next + "</button>" +
+          '<button class="btn" data-action="prev" aria-label="上一张">' + icon.prev + "</button>" +
+          '<button class="btn warn" data-action="learning" aria-pressed="' + (mark === "learning") + '">' + icon.redo + "还在学</button>" +
+          '<button class="btn good" data-action="known" aria-pressed="' + (mark === "known") + '">' + icon.check + "我会了</button>" +
+          '<button class="btn" data-action="next" aria-label="下一张">' + icon.next + "</button>" +
         "</div>" +
       "</section>" + listView(deck) + "</div>";
   }
@@ -134,12 +134,12 @@
   const speech = () => window.LiveKanjiSpeech && window.LiveKanjiSpeech.available() ? window.LiveKanjiSpeech : null;
   function sayBtn(text, label) {
     if (!speech()) return "";
-    return '<button class="say" type="button" data-say="' + esc(text) + '" aria-label="' + esc(label || "Play audio") + '">' + icon.speaker + "</button>";
+    return '<button class="say" type="button" data-say="' + esc(text) + '" aria-label="' + esc(label || "播放") + '">' + icon.speaker + "</button>";
   }
   function speedBtn() {
     if (!speech()) return "";
     const slow = speech().isSlow();
-    return '<button class="speed" type="button" data-action="speed" aria-pressed="' + slow + '">' + "Slow" + "</button>";
+    return '<button class="speed" type="button" data-action="speed" aria-pressed="' + slow + '">' + "慢速" + "</button>";
   }
 
   // A sentence and its kana line, split into matching pieces: hover (or tap)
@@ -152,9 +152,9 @@
   }
 
   function exampleLines(card) {
-    return '<div class="ex-head"><span class="label">Example</span>' + sayBtn(card.example, "Play the example sentence") + speedBtn() + "</div>" +
+    return '<div class="ex-head"><span class="label">例句</span>' + sayBtn(card.example, "播放例句") + speedBtn() + "</div>" +
       pairLines(card.example, card.exampleReading, card.word, "ex") +
-      '<p class="ex-en">' + esc(card.exampleEn) + "</p>";
+      '<p class="ex-tr">' + esc(card.translation) + "</p>";
   }
 
   // Business cards: hover (computer) or tap (phone) the sentence
@@ -162,9 +162,9 @@
   function formalBlock(card) {
     return '<div class="formal' + (state.spokenOpen ? " open" : "") + '" tabindex="0" role="button" aria-expanded="' + state.spokenOpen + '" data-action="spoken">' +
       exampleLines(card) +
-      '<span class="spoken-hint"><span class="on-hover">Hover over the sentence to see the everyday spoken version</span>' +
-      '<span class="on-touch">' + (state.spokenOpen ? "Tap to hide the spoken version" : "Tap the sentence to see the everyday spoken version") + "</span></span>" +
-      '<div class="spoken"><div class="ex-head"><span class="label">Everyday spoken version · <span lang="ja">話し言葉</span></span>' + sayBtn(card.casual, "Play the spoken version") + "</div>" +
+      '<span class="spoken-hint"><span class="on-hover">鼠标移到句子上，查看日常口语说法</span>' +
+      '<span class="on-touch">' + (state.spokenOpen ? "再点一次收起口语说法" : "点击句子，查看日常口语说法") + "</span></span>" +
+      '<div class="spoken"><div class="ex-head"><span class="label">日常口语说法 · <span lang="ja">話し言葉</span></span>' + sayBtn(card.casual, "播放口语说法") + "</div>" +
         pairLines(card.casual, card.casualReading, "", "sp") +
         (card.casualNote ? '<p class="spoken-note">' + esc(card.casualNote) + "</p>" : "") +
       "</div></div>";
@@ -172,13 +172,13 @@
 
   function listView(deck) {
     const idx = visibleIndexes(deck);
-    const filters = [["all", "All"], ["learning", "Learning"], ["new", "New"]];
-    return '<aside class="list" aria-label="All words">' +
-      '<div class="list-head"><h2>Words</h2><div class="filter">' +
+    const filters = [["all", "全部"], ["learning", "在学"], ["new", "新词"]];
+    return '<aside class="list" aria-label="单词列表">' +
+      '<div class="list-head"><h2>单词</h2><div class="filter">' +
       filters.map(([id, label]) => '<button data-filter="' + id + '" aria-pressed="' + (state.filter === id) + '">' + label + "</button>").join("") +
       "</div></div>" +
       (idx.length === 0
-        ? '<div class="empty">' + (state.filter === "learning" ? "Nothing marked “Still learning” yet." : "You've marked every word. Nice work.") + "</div>"
+        ? '<div class="empty">' + (state.filter === "learning" ? "还没有标记为「还在学」的词。" : "所有单词都已标记，太棒了！") + "</div>"
         : "<ul>" + idx.map((i) => {
             const c = deck.cards[i];
             const m = markOf(deck.id, c);
@@ -192,22 +192,22 @@
 
   function videosView() {
     return '<section class="soon-panel">' +
-      "<div><h1>Learn from Videos</h1>" +
-      "<p>Paste a link to a short video by a Japanese creator. LiveKanji will pull out the words, show how to read them, and explain the grammar in plain English, including casual spoken forms.</p></div>" +
-      '<div class="url-row"><input id="video-url" type="url" placeholder="Paste a YouTube, TikTok or Instagram link" disabled aria-label="Video link (coming soon)">' +
-      '<button class="btn" disabled>Make a lesson</button></div>' +
-      '<div class="sources"><span class="pill plain">YouTube</span><span class="pill plain">TikTok</span><span class="pill plain">Instagram</span><span class="pill warn">Coming soon</span></div>' +
+      "<div><h1>看视频学日语</h1>" +
+      "<p>粘贴日本博主的短视频链接，LiveKanji 会找出视频里的单词、标注读音，并用中文讲解语法，包括口语和流行说法。</p></div>" +
+      '<div class="url-row"><input id="video-url" type="url" placeholder="粘贴 YouTube、TikTok 或 Instagram 链接" disabled aria-label="视频链接（即将推出）">' +
+      '<button class="btn" disabled>生成课程</button></div>' +
+      '<div class="sources"><span class="pill plain">YouTube</span><span class="pill plain">TikTok</span><span class="pill plain">Instagram</span><span class="pill warn">即将推出</span></div>' +
       '<ol class="steps">' +
-        "<li><strong>Get the words</strong><span>Use the video's subtitles, or listen to the audio if there are none.</span></li>" +
-        "<li><strong>Show readings</strong><span>Hiragana above every kanji, with katakana words marked.</span></li>" +
-        "<li><strong>Explain grammar</strong><span>Each sentence broken down in English, including slang.</span></li>" +
-        "<li><strong>Save to cards</strong><span>Add new words to your own flash card deck.</span></li>" +
+        "<li><strong>提取台词</strong><span>使用视频字幕；没有字幕就听音频识别。</span></li>" +
+        "<li><strong>标注读音</strong><span>每个汉字上方标平假名，片假名单词单独标出。</span></li>" +
+        "<li><strong>讲解语法</strong><span>用中文逐句拆解，包括口语和流行语。</span></li>" +
+        "<li><strong>存成卡片</strong><span>把生词加入你自己的单词卡。</span></li>" +
       "</ol>" +
-      '<div class="demo"><div class="label">Example of a lesson line</div>' +
+      '<div class="demo"><div class="label">课程示例</div>' +
         '<p class="ex-jp" lang="ja">これめっちゃ<ruby>美味<rt>おい</rt></ruby>しいじゃん！</p>' +
-        '<p class="ex-en">This is so good!</p>' +
-        '<div class="tip"><div class="label">Grammar</div><strong lang="ja">めっちゃ</strong> means “really / super”. It is casual and started in Kansai. ' +
-        '<strong lang="ja">〜じゃん</strong> at the end is a casual “isn’t it!”, used to share surprise or agreement with friends.</div>' +
+        '<p class="ex-tr">这个也太好吃了吧！</p>' +
+        '<div class="tip"><div class="label">语法</div><strong lang="ja">めっちゃ</strong> 意思是“非常、超级”，是口语，最早来自关西方言。' +
+        '句尾的 <strong lang="ja">〜じゃん</strong> 是随意的“不是吗！”，用来和朋友分享惊讶或认同。</div>' +
       "</div></section>";
   }
 
